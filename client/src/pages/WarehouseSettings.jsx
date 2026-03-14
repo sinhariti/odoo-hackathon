@@ -34,7 +34,7 @@ const WarehouseSettings = () => {
 
   const filteredWarehouses = warehouses.filter(w =>
     w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (w.shortCode && w.shortCode.toLowerCase().includes(searchQuery.toLowerCase()))
+    (w.code && w.code.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleChange = (e) => {
@@ -51,7 +51,11 @@ const WarehouseSettings = () => {
 
     setLoading(true);
     try {
-      await api.post('/warehouses', formData);
+      await api.post('/warehouses', {
+        name: formData.name,
+        code: formData.shortCode, // Map frontend 'shortCode' to backend 'code'
+        address: formData.address
+      });
       setMessage('Warehouse saved successfully!');
       setFormData({ name: '', shortCode: '', address: '' });
       fetchWarehouses();
@@ -188,7 +192,7 @@ const WarehouseSettings = () => {
                     filteredWarehouses.map((wh, idx) => (
                       <tr key={wh.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredWarehouses.length - 1 ? 'border-b border-dashed border-[#2e303a]' : ''}`}>
                         <td className="py-4 px-6 font-bold text-gray-200">{wh.name}</td>
-                        <td className="py-4 px-6 font-medium text-purple-400">{wh.shortCode}</td>
+                        <td className="py-4 px-6 font-medium text-purple-400">{wh.code}</td>
                         <td className="py-4 px-6 text-gray-400 truncate max-w-xs">{wh.address || '—'}</td>
                       </tr>
                     ))

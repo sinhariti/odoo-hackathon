@@ -22,9 +22,9 @@ const getLocations = async (req, res) => {
 // POST /locations
 const createLocation = async (req, res) => {
     try {
-        const { warehouseId, name, type } = req.body;
+        const { warehouseId, name, code, type } = req.body;
         if (!warehouseId || !name) return res.status(400).json({ error: 'warehouseId and name are required' });
-        const location = await Location.create({ warehouseId, name, type });
+        const location = await Location.create({ warehouseId, name, code, type });
         res.status(201).json({ location });
     } catch (err) {
         res.status(500).json({ error: err.message });

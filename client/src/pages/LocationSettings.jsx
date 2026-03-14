@@ -49,7 +49,7 @@ const LocationSettings = () => {
 
   const filteredLocations = locations.filter(loc =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (loc.shortCode && loc.shortCode.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (loc.code && loc.code.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (loc.warehouse?.name && loc.warehouse.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -67,7 +67,11 @@ const LocationSettings = () => {
 
     setLoading(true);
     try {
-      await api.post('/locations', formData);
+      await api.post('/locations', {
+        name: formData.name,
+        code: formData.shortCode, // Map frontend shortCode to backend code
+        warehouseId: formData.warehouseId
+      });
       setMessage('Location saved successfully!');
       setFormData({ name: '', shortCode: '', warehouseId: '' });
       fetchLocations();
@@ -214,7 +218,7 @@ const LocationSettings = () => {
                     filteredLocations.map((loc, idx) => (
                       <tr key={loc.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredLocations.length - 1 ? 'border-b border-dashed border-[#2e303a]' : ''}`}>
                         <td className="py-4 px-6 font-bold text-gray-200">{loc.name}</td>
-                        <td className="py-4 px-6 font-medium text-purple-400">{loc.shortCode || '—'}</td>
+                        <td className="py-4 px-6 font-medium text-purple-400">{loc.code || '—'}</td>
                         <td className="py-4 px-6 text-gray-400 max-w-xs">{loc.warehouse?.name || '—'}</td>
                       </tr>
                     ))

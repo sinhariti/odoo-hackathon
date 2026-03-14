@@ -13,13 +13,13 @@ const getWarehouses = async (req, res) => {
 // POST /warehouses
 const createWarehouse = async (req, res) => {
     try {
-        const { name, address } = req.body;
+        const { name, code, address } = req.body;
         if (!name) return res.status(400).json({ error: 'name is required' });
-        const warehouse = await Warehouse.create({ name, address });
+        const warehouse = await Warehouse.create({ name, code, address });
         res.status(201).json({ warehouse });
     } catch (err) {
         if (err.name === 'SequelizeUniqueConstraintError')
-            return res.status(409).json({ error: 'Warehouse name already exists' });
+            return res.status(409).json({ error: 'Warehouse name or code already exists' });
         res.status(500).json({ error: err.message });
     }
 };

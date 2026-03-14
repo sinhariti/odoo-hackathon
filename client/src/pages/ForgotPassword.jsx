@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
-import viteLogo from '../assets/vite.svg';
+import odooLogo from '../assets/odoo_logo.webp';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -43,7 +43,7 @@ const ForgotPassword = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <img
           className="mx-auto h-16 w-auto drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"
-          src={viteLogo}
+          src={odooLogo}
           alt="App Logo"
         />
         <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">

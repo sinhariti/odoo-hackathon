@@ -1,33 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Button from '../components/Button';
 import SearchButton from '../components/SearchButton';
 import { LayoutList, LayoutGrid } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const mockReceipts = [
-  { id: 'WH/IN/0001', from: 'vendor', to: 'WH/Stock1', contact: 'Azure Interior', scheduled: '24 Feb 25', status: 'Ready' },
-  { id: 'WH/IN/0002', from: 'vendor', to: 'WH/Stock1', contact: 'Azure Interior', scheduled: '24 Feb 25', status: 'Ready' },
-  { id: 'WH/IN/0003', from: 'vendor', to: 'WH/Stock2', contact: 'Wood Inc', scheduled: '25 Feb 25', status: 'Waiting' },
-  { id: 'WH/IN/0004', from: 'vendor', to: 'WH/Stock1', contact: 'Metal Works', scheduled: '21 Feb 25', status: 'Done' },
-];
+import api from '../api/api';
 
 const StatusPill = ({ status }) => {
   const styles = {
-    Ready: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-    Done: 'bg-green-500/10 text-green-400 border border-green-500/20',
-    Waiting: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    draft: 'bg-gray-500/10 text-gray-400 border border-gray-500/20',
+    ready: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    done: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    waiting: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    cancelled: 'bg-red-500/10 text-red-400 border border-red-500/20',
   };
 
+  const statusKey = (status || '').toLowerCase();
+
   return (
-    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${styles[status] || 'bg-gray-800 text-gray-300'}`}>
-      {status}
+    <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${styles[statusKey] || 'bg-gray-800 text-gray-300'}`}>
+      {status || 'Unknown'}
     </span>
   );
 };
 
 // Kanban Column Component
-const KanbanColumn = ({ title, status, items }) => {
+const KanbanColumn = ({ title, items }) => {
   return (
     <div className="flex-1 bg-[#16171d] rounded-xl border border-[#2e303a] p-4 min-w-[300px] flex flex-col h-full">
       <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#2e303a]">
@@ -41,19 +39,19 @@ const KanbanColumn = ({ title, status, items }) => {
         {items.map(item => (
           <div key={item.id} className="bg-[#1f2028] p-4 rounded-lg border border-[#3e404a] hover:border-purple-500/50 transition-colors shadow-sm cursor-pointer group">
             <div className="flex justify-between items-start mb-2">
-              <span className="font-bold text-gray-200 text-sm group-hover:text-purple-400 transition-colors">{item.id}</span>
+              <span className="font-bold text-gray-200 text-sm group-hover:text-purple-400 transition-colors">{item.reference || `#${item.id}`}</span>
               <StatusPill status={item.status} />
             </div>
 
-            <p className="text-gray-300 text-sm font-medium mb-3 truncate">{item.contact}</p>
+            <p className="text-gray-300 text-sm font-medium mb-3 truncate">{item.supplierName || '—'}</p>
 
             <div className="flex justify-between text-xs text-gray-500">
               <div className="flex flex-col space-y-1">
-                <span>From: <span className="text-gray-400 font-medium">{item.from}</span></span>
-                <span>To: <span className="text-gray-400 font-medium">{item.to}</span></span>
+                <span>From: <span className="text-gray-400 font-medium">{item.srcLocation?.name || '—'}</span></span>
+                <span>To: <span className="text-gray-400 font-medium">{item.destLocation?.name || '—'}</span></span>
               </div>
               <div className="text-right flex flex-col justify-end">
-                <span>{item.scheduled}</span>
+                <span>{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</span>
               </div>
             </div>
           </div>
@@ -71,11 +69,27 @@ const KanbanColumn = ({ title, status, items }) => {
 const Receipt = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
   const [searchQuery, setSearchQuery] = useState('');
+  const [receipts, setReceipts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReceipts = async () => {
+      try {
+        const data = await api.get('/receipts');
+        setReceipts(data.receipts || []);
+      } catch (err) {
+        console.error('Failed to load receipts', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReceipts();
+  }, []);
 
   // Filter logic based on search
-  const filteredReceipts = mockReceipts.filter(r =>
-    r.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.contact.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredReceipts = receipts.filter(r =>
+    (r.reference || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (r.supplierName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -147,22 +161,29 @@ const Receipt = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredReceipts.map((item, idx) => (
-                      <tr key={item.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredReceipts.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
-                        <td className="py-4 px-6 font-bold text-gray-200">{item.id}</td>
-                        <td className="py-4 px-6 text-gray-400">{item.from}</td>
-                        <td className="py-4 px-6 text-gray-300 font-medium">{item.to}</td>
-                        <td className="py-4 px-6 font-medium text-purple-300/80">{item.contact}</td>
-                        <td className="py-4 px-6 text-gray-400">{item.scheduled}</td>
-                        <td className="py-4 px-6 text-gray-400"><StatusPill status={item.status} /></td>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="6" className="py-8 text-center text-gray-500 animate-pulse">
+                          Loading receipts...
+                        </td>
                       </tr>
-                    ))}
-                    {filteredReceipts.length === 0 && (
+                    ) : filteredReceipts.length === 0 ? (
                       <tr>
                         <td colSpan="6" className="py-8 text-center text-gray-500">
                           {searchQuery ? 'No receipts matching your search.' : 'No receipts found.'}
                         </td>
                       </tr>
+                    ) : (
+                      filteredReceipts.map((item, idx) => (
+                        <tr key={item.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredReceipts.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
+                          <td className="py-4 px-6 font-bold text-gray-200">{item.reference || `#${item.id}`}</td>
+                          <td className="py-4 px-6 text-gray-400">{item.srcLocation?.name || '—'}</td>
+                          <td className="py-4 px-6 text-gray-300 font-medium">{item.destLocation?.name || '—'}</td>
+                          <td className="py-4 px-6 font-medium text-purple-300/80">{item.supplierName || '—'}</td>
+                          <td className="py-4 px-6 text-gray-400">{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</td>
+                          <td className="py-4 px-6 text-gray-400"><StatusPill status={item.status} /></td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
@@ -174,19 +195,20 @@ const Receipt = () => {
           {viewMode === 'kanban' && (
             <div className="flex-1 flex gap-6 overflow-x-auto pb-4 items-start">
               <KanbanColumn
+                title="Draft"
+                items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'draft')}
+              />
+              <KanbanColumn
                 title="Waiting"
-                status="Waiting"
-                items={filteredReceipts.filter(r => r.status === 'Waiting')}
+                items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'waiting')}
               />
               <KanbanColumn
                 title="Ready"
-                status="Ready"
-                items={filteredReceipts.filter(r => r.status === 'Ready')}
+                items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'ready')}
               />
               <KanbanColumn
                 title="Done"
-                status="Done"
-                items={filteredReceipts.filter(r => r.status === 'Done')}
+                items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'done')}
               />
             </div>
           )}

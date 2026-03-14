@@ -1,28 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Button from '../components/Button';
 import PrintPageButton from '../components/PrintPageButton';
 import { useAuth } from '../context/AuthContext';
 import { ChevronRight, Trash2, Check, X } from 'lucide-react';
+import api from '../api/api';
 
 const AddReceipt = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Pickings state
+  const [pickingId, setPickingId] = useState(null);
+  const [reference, setReference] = useState('New');
   const [status, setStatus] = useState('Draft'); // Draft | Ready | Done
+
+  // Form Data
   const [formData, setFormData] = useState({
     receiveFrom: '',
     scheduleDate: '',
     responsible: user?.name || user?.email || 'admin',
   });
-  const [products, setProducts] = useState([
-    { id: 1, product: '[DESK001] Desk', quantity: 6 }
-  ]);
+
+  // Background Data
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [availableLocations, setAvailableLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  // Added Products
+  const [products, setProducts] = useState([]);
   const [addingProduct, setAddingProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({ product: '', quantity: 1 });
+  const [newProduct, setNewProduct] = useState({ productId: '', quantity: 1 });
+
+  // Fetch reference data eagerly
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [prodRes, locRes] = await Promise.all([
+          api.get('/products'),
+          api.get('/locations')
+        ]);
+        setAvailableProducts(prodRes.products || []);
+        setAvailableLocations(locRes.locations || []);
+      } catch (err) {
+        setError('Failed to load initial data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleAddProduct = () => {
-    if (!newProduct.product) return;
-    setProducts([...products, { ...newProduct, id: Date.now() }]);
-    setNewProduct({ product: '', quantity: 1 });
+    if (!newProduct.productId) return;
+    const prodDef = availableProducts.find(p => p.id === parseInt(newProduct.productId));
+    const prodName = prodDef ? `[${prodDef.sku || ''}] ${prodDef.name}` : 'Unknown';
+
+    setProducts([...products, {
+      id: Date.now(), // temp id
+      productId: parseInt(newProduct.productId),
+      product: prodName,
+      quantity: newProduct.quantity || 1
+    }]);
+
+    setNewProduct({ productId: '', quantity: 1 });
     setAddingProduct(false);
   };
 
@@ -30,12 +74,87 @@ const AddReceipt = () => {
     setProducts(products.filter(p => p.id !== id));
   };
 
+  const createAndReady = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      // 1. Create Picking
+      const supplierLoc = availableLocations.find(l => l.type === 'supplier');
+      const internalLoc = availableLocations.find(l => l.type === 'internal');
+
+      const payload = {
+        supplierName: formData.receiveFrom,
+        srcLocationId: supplierLoc ? supplierLoc.id : null,
+        destLocationId: internalLoc ? internalLoc.id : 1, // Fallback
+        scheduledDate: formData.scheduleDate || null,
+      };
+
+      const { picking } = await api.post('/receipts', payload);
+
+      // 2. Add Lines
+      for (const line of products) {
+        await api.post(`/receipts/${picking.id}/lines`, {
+          productId: line.productId,
+          demandQty: line.quantity
+        });
+      }
+
+      // 3. Mark as Ready
+      await api.put(`/receipts/${picking.id}`, { status: 'ready' });
+
+      // Update state
+      setPickingId(picking.id);
+      setReference(picking.reference || `#${picking.id}`);
+      setStatus('Ready');
+
+    } catch (err) {
+      setError(err.message || 'Failed to save receipt');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const validatePicking = async () => {
+    if (!pickingId) return;
+    setSaving(true);
+    setError('');
+    try {
+      await api.post(`/receipts/${pickingId}/validate`);
+      setStatus('Done');
+    } catch (err) {
+      setError(err.message || 'Validation failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleActionClick = () => {
-    if (status === 'Draft') setStatus('Ready');
-    else if (status === 'Ready') setStatus('Done');
+    if (status === 'Draft') {
+      createAndReady();
+    } else if (status === 'Ready') {
+      validatePicking();
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!pickingId) {
+      // If it's a draft and not saved to DB yet, just go back.
+      navigate('/operations/receipt');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await api.post(`/receipts/${pickingId}/cancel`);
+      navigate('/operations/receipt');
+    } catch (err) {
+      setError(err.message || 'Failed to cancel receipt');
+      setSaving(false);
+    }
   };
 
   const getActionButtonText = () => {
+    if (saving) return 'Saving...';
     if (status === 'Draft') return 'Mark as To Do';
     if (status === 'Ready') return 'Validate';
     return 'Validated';
@@ -60,6 +179,12 @@ const AddReceipt = () => {
           </h2>
         </div>
 
+        {error && (
+          <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm mb-6">
+            {error}
+          </div>
+        )}
+
         {/* Form Container */}
         <div className="bg-[#16171d] rounded-xl border border-[#2e303a] shadow-2xl overflow-hidden flex flex-col">
 
@@ -69,7 +194,7 @@ const AddReceipt = () => {
               <div className="w-36">
                 <Button
                   onClick={handleActionClick}
-                  disabled={status === 'Done'}
+                  disabled={status === 'Done' || saving || (status === 'Draft' && !formData.receiveFrom)}
                   className="py-2! text-sm!"
                 >
                   {getActionButtonText()}
@@ -77,9 +202,15 @@ const AddReceipt = () => {
               </div>
               <div className="w-24">
                 <PrintPageButton />
+                <Button className="py-2! text-sm! bg-[#1f2028]! rounded-lg border border-[#3e404a] text-gray-300 hover:text-white! hover:border-purple-500/50" disabled={status !== 'Done'}>
+                  Print
+                </Button>
               </div>
               <div className="w-24">
-                <Button className="py-2! text-sm! bg-[#1f2028]! rounded-lg border border-[#3e404a] text-gray-300 hover:text-white! hover:border-red-500/50">
+                <Button
+                  onClick={handleCancel}
+                  className="py-2! text-sm! bg-[#1f2028]! rounded-lg border border-[#3e404a] text-gray-300 hover:text-white! hover:border-red-500/50"
+                >
                   Cancel
                 </Button>
               </div>
@@ -102,7 +233,7 @@ const AddReceipt = () => {
 
           {/* Form Body */}
           <div className="p-8">
-            <h3 className="text-2xl font-bold text-gray-200 mb-8">WH/IN/0005</h3>
+            <h3 className="text-2xl font-bold text-gray-200 mb-8">{reference}</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 mb-12">
               {/* Left Column */}
@@ -113,7 +244,9 @@ const AddReceipt = () => {
                     type="text"
                     value={formData.receiveFrom}
                     onChange={(e) => setFormData({ ...formData, receiveFrom: e.target.value })}
-                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors"
+                    disabled={status !== 'Draft'}
+                    placeholder="e.g. Azure Interior"
+                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors disabled:text-gray-500"
                   />
                 </div>
                 <div>
@@ -122,7 +255,8 @@ const AddReceipt = () => {
                     type="text"
                     value={formData.responsible}
                     onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors"
+                    disabled={status !== 'Draft'}
+                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -135,7 +269,8 @@ const AddReceipt = () => {
                     type="date"
                     value={formData.scheduleDate}
                     onChange={(e) => setFormData({ ...formData, scheduleDate: e.target.value })}
-                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors [color-scheme:dark]"
+                    disabled={status !== 'Draft'}
+                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors [color-scheme:dark] disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -166,61 +301,70 @@ const AddReceipt = () => {
                         <td className="py-4 px-2 font-medium text-gray-200">{p.product}</td>
                         <td className="py-4 px-2 text-right text-gray-300 font-medium">{p.quantity}</td>
                         <td className="py-4 px-2 text-right">
-                          <button
-                            onClick={() => handleDeleteProduct(p.id)}
-                            className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1 outline-none focus:outline-none"
-                            title="Delete product"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {status === 'Draft' && (
+                            <button
+                              onClick={() => handleDeleteProduct(p.id)}
+                              className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1 outline-none focus:outline-none"
+                              title="Delete product"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
 
-                    {addingProduct ? (
-                      <tr className="border-b border-[#2e303a] bg-[#1a1b22]">
-                        <td className="py-2 px-2">
-                          <input
-                            type="text"
-                            placeholder="Product name..."
-                            value={newProduct.product}
-                            onChange={(e) => setNewProduct({ ...newProduct, product: e.target.value })}
-                            autoFocus
-                            className="w-full bg-[#16171d] border border-[#3e404a] text-white px-3 py-1.5 rounded-md focus:outline-none focus:border-purple-500 text-sm"
-                          />
-                        </td>
-                        <td className="py-2 px-2 text-right">
-                          <input
-                            type="number"
-                            min="1"
-                            value={newProduct.quantity}
-                            onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 0 })}
-                            className="w-20 bg-[#16171d] border border-[#3e404a] text-white px-3 py-1.5 rounded-md focus:outline-none focus:border-purple-500 text-sm text-right inline-block"
-                          />
-                        </td>
-                        <td className="py-2 px-2 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={handleAddProduct} className="p-1.5 text-green-400 hover:bg-green-400/10 rounded-md transition-colors outline-none focus:outline-none">
-                              <Check size={16} />
+                    {status === 'Draft' && (
+                      addingProduct ? (
+                        <tr className="border-b border-[#2e303a] bg-[#1a1b22]">
+                          <td className="py-2 px-2">
+                            <select
+                              value={newProduct.productId}
+                              onChange={(e) => setNewProduct({ ...newProduct, productId: e.target.value })}
+                              autoFocus
+                              className="w-full bg-[#16171d] border border-[#3e404a] text-white px-3 py-1.5 rounded-md focus:outline-none focus:border-purple-500 text-sm [&>option]:bg-[#1f2028]"
+                            >
+                              <option value="">Select a product...</option>
+                              {availableProducts.map((ap) => (
+                                <option key={ap.id} value={ap.id}>
+                                  {ap.sku ? `[${ap.sku}] ` : ''}{ap.name}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            <input
+                              type="number"
+                              min="1"
+                              value={newProduct.quantity}
+                              onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 0 })}
+                              className="w-20 bg-[#16171d] border border-[#3e404a] text-white px-3 py-1.5 rounded-md focus:outline-none focus:border-purple-500 text-sm text-right inline-block"
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              <button onClick={handleAddProduct} className="p-1.5 text-green-400 hover:bg-green-400/10 rounded-md transition-colors outline-none focus:outline-none">
+                                <Check size={16} />
+                              </button>
+                              <button onClick={() => setAddingProduct(false)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors outline-none focus:outline-none">
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <td colSpan="3" className="py-4 px-2">
+                            <button
+                              type="button"
+                              onClick={() => setAddingProduct(true)}
+                              className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors inline-block outline-none focus:outline-none"
+                            >
+                              Add a Product
                             </button>
-                            <button onClick={() => setAddingProduct(false)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors outline-none focus:outline-none">
-                              <X size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="py-4 px-2">
-                          <button
-                            type="button"
-                            onClick={() => setAddingProduct(true)}
-                            className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors inline-block outline-none focus:outline-none"
-                          >
-                            Add a Product
-                          </button>
-                        </td>
-                      </tr>
+                          </td>
+                        </tr>
+                      )
                     )}
                   </tbody>
                 </table>
@@ -236,3 +380,4 @@ const AddReceipt = () => {
 };
 
 export default AddReceipt;
+

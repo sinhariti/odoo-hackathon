@@ -98,8 +98,37 @@ const Navbar = () => {
           {getPageTitle()}
         </h1>
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-lg bg-[#2e303a] border border-[#3e404a] flex items-center justify-center text-white font-bold shadow-[0_0_10px_rgba(168,85,247,0.2)]" title={user?.name || user?.email || ''}>
-            {avatarLetter}
+          <div className="relative group/avatar">
+            <div className="h-10 w-10 rounded-lg bg-[#2e303a] border border-[#3e404a] flex items-center justify-center text-white font-bold shadow-[0_0_10px_rgba(168,85,247,0.2)] cursor-default select-none hover:border-purple-500/60 transition-colors">
+              {avatarLetter}
+            </div>
+            {/* Hover Tooltip */}
+            <div className="absolute right-0 top-full mt-3 w-56 hidden group-hover/avatar:block z-50">
+              <div className="bg-[#1f2028] border border-[#2e303a] rounded-xl shadow-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="flex items-center gap-3 pb-3 border-b border-[#2e303a]">
+                  <div className="h-9 w-9 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-sm shrink-0">
+                    {avatarLetter}
+                  </div>
+                  <span className="text-xs font-semibold text-gray-300 uppercase tracking-wider">Profile</span>
+                </div>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-0.5">Login ID</p>
+                    <p className="text-xs font-mono text-purple-300 truncate">{user?.name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-0.5">Email</p>
+                    <p className="text-xs text-gray-200 truncate">{user?.email || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-0.5">Role</p>
+                    <p className="text-xs text-gray-200 truncate">{user?.role || '—'}</p>
+                  </div>
+                </div>
+              </div>
+              {/* Arrow */}
+              <div className="absolute -top-1.5 right-3 w-3 h-3 bg-[#1f2028] border-l border-t border-[#2e303a] rotate-45"></div>
+            </div>
           </div>
           <button
             onClick={handleLogout}

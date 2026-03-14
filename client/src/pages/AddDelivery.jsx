@@ -5,14 +5,16 @@ import PrintPageButton from '../components/PrintPageButton';
 import { useAuth } from '../context/AuthContext';
 import { ChevronRight, Trash2, Check, X } from 'lucide-react';
 
-const AddReceipt = () => {
+const AddDelivery = () => {
   const { user } = useAuth();
-  const [status, setStatus] = useState('Draft'); // Draft | Ready | Done
+  const [status, setStatus] = useState('Draft'); // Draft | Waiting | Ready | Done
   const [formData, setFormData] = useState({
-    receiveFrom: '',
+    deliveryAddress: '',
     scheduleDate: '',
     responsible: user?.name || user?.email || 'admin',
+    operationType: 'Delivery Orders',
   });
+
   const [products, setProducts] = useState([
     { id: 1, product: '[DESK001] Desk', quantity: 6 }
   ]);
@@ -31,17 +33,19 @@ const AddReceipt = () => {
   };
 
   const handleActionClick = () => {
-    if (status === 'Draft') setStatus('Ready');
+    if (status === 'Draft') setStatus('Waiting');
+    else if (status === 'Waiting') setStatus('Ready');
     else if (status === 'Ready') setStatus('Done');
   };
 
   const getActionButtonText = () => {
-    if (status === 'Draft') return 'Mark as To Do';
+    if (status === 'Draft') return 'Mark as Todo';
+    if (status === 'Waiting') return 'Check Availability';
     if (status === 'Ready') return 'Validate';
     return 'Validated';
   };
 
-  const statuses = ['Draft', 'Ready', 'Done'];
+  const statuses = ['Draft', 'Waiting', 'Ready', 'Done'];
 
   return (
     <div className="min-h-screen bg-[#08060d] text-gray-300 font-sans flex flex-col">
@@ -55,8 +59,8 @@ const AddReceipt = () => {
               New
             </Button>
           </div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">
-            Receipt
+          <h2 className="text-3xl font-extrabold text-[#ffff] tracking-tight">
+            Delivery
           </h2>
         </div>
 
@@ -66,7 +70,7 @@ const AddReceipt = () => {
           {/* Action Bar */}
           <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-b border-[#2e303a] bg-[#1a1b22] gap-4">
             <div className="flex gap-3">
-              <div className="w-36">
+              <div className="w-40">
                 <Button
                   onClick={handleActionClick}
                   disabled={status === 'Done'}
@@ -93,7 +97,7 @@ const AddReceipt = () => {
                     {s}
                   </span>
                   {idx < statuses.length - 1 && (
-                    <ChevronRight size={16} className="text-gray-600 mx-2" />
+                    <ChevronRight size={16} className="text-gray-600 mx-1" />
                   )}
                 </React.Fragment>
               ))}
@@ -102,17 +106,17 @@ const AddReceipt = () => {
 
           {/* Form Body */}
           <div className="p-8">
-            <h3 className="text-2xl font-bold text-gray-200 mb-8">WH/IN/0005</h3>
+            <h3 className="text-2xl font-bold text-gray-200 mb-8">WH/OUT/0005</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 mb-12">
               {/* Left Column */}
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Receive From</label>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Delivery Address</label>
                   <input
                     type="text"
-                    value={formData.receiveFrom}
-                    onChange={(e) => setFormData({ ...formData, receiveFrom: e.target.value })}
+                    value={formData.deliveryAddress}
+                    onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
                     className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors"
                   />
                 </div>
@@ -137,6 +141,18 @@ const AddReceipt = () => {
                     onChange={(e) => setFormData({ ...formData, scheduleDate: e.target.value })}
                     className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors [color-scheme:dark]"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Operation Type</label>
+                  <select
+                    value={formData.operationType}
+                    onChange={(e) => setFormData({ ...formData, operationType: e.target.value })}
+                    className="w-full bg-transparent border-b border-[#3e404a] text-white py-2 focus:outline-none focus:border-purple-500 transition-colors appearance-none"
+                  >
+                    <option value="Delivery Orders" className="bg-[#1f2028]">Delivery Orders</option>
+                    <option value="Internal Transfers" className="bg-[#1f2028]">Internal Transfers</option>
+                    <option value="Dropship Orders" className="bg-[#1f2028]">Dropship Orders</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -235,4 +251,4 @@ const AddReceipt = () => {
   );
 };
 
-export default AddReceipt;
+export default AddDelivery;

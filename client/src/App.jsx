@@ -10,7 +10,8 @@ import WarehouseSettings from './pages/WarehouseSettings';
 import LocationSettings from './pages/LocationSettings';
 import Stock from './pages/Stock';
 import MoveHistory from './pages/MoveHistory';
-
+import Receipt from './pages/Receipt';
+import AddReceipt from './pages/AddReceipt';
 // Import base css where Tailwind should be loaded
 import './index.css';
 
@@ -26,6 +27,8 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><MoveHistory /></ProtectedRoute>} />
+          <Route path="/operations/receipt" element={<ProtectedRoute><Receipt /></ProtectedRoute>} />
+          <Route path="/operations/receipt/new" element={<ProtectedRoute><AddReceipt /></ProtectedRoute>} />
           <Route path="/settings/warehouse" element={<ProtectedRoute><WarehouseSettings /></ProtectedRoute>} />
           <Route path="/settings/location" element={<ProtectedRoute><LocationSettings /></ProtectedRoute>} />
         </Routes>

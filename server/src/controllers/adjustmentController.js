@@ -102,8 +102,13 @@ const validateAdjustment = async (req, res) => {
             transaction: t,
         });
 
+        const oldQuantity = quant.quantity;
+        
         await quant.update({ quantity: adjustment.countedQty }, { transaction: t });
-        await adjustment.update({ status: 'applied', difference: adjustment.countedQty - quant.quantity }, { transaction: t });
+        await adjustment.update({ 
+            status: 'applied', 
+            difference: adjustment.countedQty - oldQuantity 
+        }, { transaction: t });
 
         await t.commit();
         res.json({ message: 'Adjustment applied', adjustment });

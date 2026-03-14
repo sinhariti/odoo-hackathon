@@ -159,7 +159,13 @@ const validatePicking = async (req, res) => {
         if (picking.status === 'cancelled') { await t.rollback(); return res.status(400).json({ error: 'Cancelled picking cannot be validated' }); }
 
         for (const move of picking.moves) {
-            const qty = move.doneQty || move.demandQty;
+            // Strict check: doneQty MUST equal demandQty
+            if (move.doneQty < move.demandQty) {
+                await t.rollback();
+                return res.status(400).json({ error: `Validation failed: Product ID ${move.productId} is missing ${move.demandQty - move.doneQty} units.` });
+            }
+
+            const qty = move.doneQty;
 
             if (picking.type === 'receipt' || picking.type === 'internal') {
                 // +qty at destination

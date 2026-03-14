@@ -7,6 +7,11 @@ const Warehouse = sequelize.define('Warehouse', {
         primaryKey: true,
         autoIncrement: true,
     },
+    code: {
+        type: DataTypes.STRING,
+        allowNull: true,   // ← Phase 1: nullable so ALTER TABLE works on existing rows
+        unique: true,
+    },
     name: {
         type: DataTypes.STRING,
         allowNull: false,

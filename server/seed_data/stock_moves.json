@@ -1,0 +1,12 @@
+[
+  { "id": 1,  "pickingId": 1, "productId": 1,  "srcLocationId": 3, "destLocationId": 1,  "demandQty": 20,  "doneQty": 20,  "status": "done",      "createdAt": "2025-02-09T10:00:00.000Z", "updatedAt": "2025-02-10T11:30:00.000Z" },
+  { "id": 2,  "pickingId": 1, "productId": 2,  "srcLocationId": 3, "destLocationId": 1,  "demandQty": 50,  "doneQty": 50,  "status": "done",      "createdAt": "2025-02-09T10:00:00.000Z", "updatedAt": "2025-02-10T11:30:00.000Z" },
+  { "id": 3,  "pickingId": 2, "productId": 1,  "srcLocationId": 1, "destLocationId": 4,  "demandQty": 5,   "doneQty": 5,   "status": "done",      "createdAt": "2025-02-14T09:00:00.000Z", "updatedAt": "2025-02-15T15:00:00.000Z" },
+  { "id": 4,  "pickingId": 2, "productId": 3,  "srcLocationId": 1, "destLocationId": 4,  "demandQty": 10,  "doneQty": 10,  "status": "done",      "createdAt": "2025-02-14T09:00:00.000Z", "updatedAt": "2025-02-15T15:00:00.000Z" },
+  { "id": 5,  "pickingId": 3, "productId": 4,  "srcLocationId": 1, "destLocationId": 5,  "demandQty": 100, "doneQty": 100, "status": "done",      "createdAt": "2025-02-19T09:00:00.000Z", "updatedAt": "2025-02-20T12:00:00.000Z" },
+  { "id": 6,  "pickingId": 4, "productId": 6,  "srcLocationId": 7, "destLocationId": 5,  "demandQty": 200, "doneQty": 0,   "status": "draft",     "createdAt": "2025-03-03T10:00:00.000Z", "updatedAt": "2025-03-03T10:00:00.000Z" },
+  { "id": 7,  "pickingId": 4, "productId": 7,  "srcLocationId": 7, "destLocationId": 5,  "demandQty": 150, "doneQty": 0,   "status": "draft",     "createdAt": "2025-03-03T10:00:00.000Z", "updatedAt": "2025-03-03T10:00:00.000Z" },
+  { "id": 8,  "pickingId": 5, "productId": 8,  "srcLocationId": 8, "destLocationId": 10, "demandQty": 500, "doneQty": 0,   "status": "draft",     "createdAt": "2025-03-10T09:00:00.000Z", "updatedAt": "2025-03-10T09:00:00.000Z" },
+  { "id": 9,  "pickingId": 5, "productId": 9,  "srcLocationId": 8, "destLocationId": 10, "demandQty": 2,   "doneQty": 0,   "status": "draft",     "createdAt": "2025-03-10T09:00:00.000Z", "updatedAt": "2025-03-10T09:00:00.000Z" },
+  { "id": 10, "pickingId": 5, "productId": 10, "srcLocationId": 8, "destLocationId": 10, "demandQty": 30,  "doneQty": 0,   "status": "cancelled", "createdAt": "2025-03-10T09:00:00.000Z", "updatedAt": "2025-03-11T09:00:00.000Z" }
+]

@@ -7,6 +7,11 @@ const Location = sequelize.define('Location', {
         primaryKey: true,
         autoIncrement: true,
     },
+    code: {
+        type: DataTypes.STRING,
+        allowNull: true,   // ← Phase 1: nullable so ALTER TABLE works on existing rows
+        unique: true,
+    },
     warehouseId: {
         type: DataTypes.INTEGER,
         allowNull: false,

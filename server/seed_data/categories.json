@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "Electronics",
+    "description": "Electronic components, devices, and accessories",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Office Supplies",
+    "description": "Stationery, paper, and general office consumables",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Raw Materials",
+    "description": "Unprocessed or minimally processed materials used in production",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Packaging",
+    "description": "Boxes, bags, wrapping materials and labelling supplies",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Spare Parts",
+    "description": "Replacement components and maintenance parts for machinery",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  }
+]

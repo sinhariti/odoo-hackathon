@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "code": "WH-MUM",
+    "name": "Main Warehouse",
+    "address": "123 Industrial Park, Mumbai, Maharashtra 400001",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "code": "WH-DEL",
+    "name": "North Distribution Center",
+    "address": "456 Logistics Hub, Delhi, Delhi 110001",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "code": "WH-BLR",
+    "name": "South Storage Facility",
+    "address": "789 Warehouse Lane, Bangalore, Karnataka 560001",
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-01T08:00:00.000Z"
+  }
+]

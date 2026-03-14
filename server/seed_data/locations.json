@@ -1,0 +1,12 @@
+[
+  { "id": 1, "warehouseId": 1, "code": "MUM-A01", "name": "Shelf A-01",      "type": "internal",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 2, "warehouseId": 1, "code": "MUM-A02", "name": "Shelf A-02",      "type": "internal",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 3, "warehouseId": 1, "code": "MUM-RCV", "name": "Receiving Dock",  "type": "supplier",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 4, "warehouseId": 1, "code": "MUM-DSP", "name": "Dispatch Zone",   "type": "customer",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 5, "warehouseId": 2, "code": "DEL-B01", "name": "Rack B-01",       "type": "internal",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 6, "warehouseId": 2, "code": "DEL-B02", "name": "Rack B-02",       "type": "internal",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 7, "warehouseId": 2, "code": "DEL-SUP", "name": "Supplier Input",  "type": "supplier",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 8, "warehouseId": 3, "code": "BLR-STF", "name": "Store Front",     "type": "internal",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 9, "warehouseId": 3, "code": "BLR-PRD", "name": "Production Line", "type": "production", "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 10,"warehouseId": 3, "code": "BLR-PKP", "name": "Customer Pickup", "type": "customer",   "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" }
+]

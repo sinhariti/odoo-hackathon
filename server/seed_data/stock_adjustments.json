@@ -1,0 +1,7 @@
+[
+  { "id": 1, "productId": 1,  "locationId": 1, "countedQty": 23,  "systemQty": 25,  "difference": -2, "reason": "Two units found damaged during physical count",     "status": "applied", "createdById": 2, "createdAt": "2025-02-28T10:00:00.000Z", "updatedAt": "2025-02-28T10:30:00.000Z" },
+  { "id": 2, "productId": 4,  "locationId": 2, "countedQty": 205, "systemQty": 200, "difference": 5,  "reason": "Unrecorded delivery from vendor found in stock",     "status": "applied", "createdById": 3, "createdAt": "2025-02-28T11:00:00.000Z", "updatedAt": "2025-02-28T11:15:00.000Z" },
+  { "id": 3, "productId": 10, "locationId": 8, "countedQty": 118, "systemQty": 120, "difference": -2, "reason": "Breakage during storage",                            "status": "applied", "createdById": 1, "createdAt": "2025-03-01T09:00:00.000Z", "updatedAt": "2025-03-01T09:20:00.000Z" },
+  { "id": 4, "productId": 5,  "locationId": 2, "countedQty": 80,  "systemQty": 80,  "difference": 0,  "reason": "Routine cycle count — no discrepancy",               "status": "applied", "createdById": 5, "createdAt": "2025-03-05T14:00:00.000Z", "updatedAt": "2025-03-05T14:10:00.000Z" },
+  { "id": 5, "productId": 9,  "locationId": 8, "countedQty": 3,   "systemQty": 4,   "difference": -1, "reason": "One motor sent for off-site repair, not recorded",   "status": "draft",   "createdById": 4, "createdAt": "2025-03-12T08:00:00.000Z", "updatedAt": "2025-03-12T08:00:00.000Z" }
+]

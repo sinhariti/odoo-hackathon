@@ -1,0 +1,7 @@
+[
+  { "id": 1, "name": "Alice Manager", "email": "alice@coreinventory.com", "password": "secret", "otp": null, "otpExpiry": null, "role": "manager", "createdAt": "2025-01-01T08:00:00.000Z", "updatedAt": "2025-01-01T08:00:00.000Z" },
+  { "id": 2, "name": "Bob Staff",     "email": "bob@coreinventory.com",   "password": "secret", "otp": null, "otpExpiry": null, "role": "staff",   "createdAt": "2025-01-02T08:00:00.000Z", "updatedAt": "2025-01-02T08:00:00.000Z" },
+  { "id": 3, "name": "Carol Staff",   "email": "carol@coreinventory.com", "password": "secret", "otp": null, "otpExpiry": null, "role": "staff",   "createdAt": "2025-01-03T08:00:00.000Z", "updatedAt": "2025-01-03T08:00:00.000Z" },
+  { "id": 4, "name": "David Manager", "email": "david@coreinventory.com", "password": "secret", "otp": null, "otpExpiry": null, "role": "manager", "createdAt": "2025-01-04T08:00:00.000Z", "updatedAt": "2025-01-04T08:00:00.000Z" },
+  { "id": 5, "name": "Eve Staff",     "email": "eve@coreinventory.com",   "password": "secret", "otp": null, "otpExpiry": null, "role": "staff",   "createdAt": "2025-01-05T08:00:00.000Z", "updatedAt": "2025-01-05T08:00:00.000Z" }
+]

@@ -159,13 +159,33 @@ const validatePicking = async (req, res) => {
         if (picking.status === 'cancelled') { await t.rollback(); return res.status(400).json({ error: 'Cancelled picking cannot be validated' }); }
 
         for (const move of picking.moves) {
-            // Strict check: doneQty MUST equal demandQty
+            // Auto-fulfill demand if not explicitly done (since UI doesn't set it)
+            if (move.doneQty === 0) {
+                move.doneQty = move.demandQty;
+            }
+
+            // Strict check: doneQty MUST equal demandQty after auto-fulfill
             if (move.doneQty < move.demandQty) {
                 await t.rollback();
                 return res.status(400).json({ error: `Validation failed: Product ID ${move.productId} is missing ${move.demandQty - move.doneQty} units.` });
             }
 
             const qty = move.doneQty;
+
+            if (picking.type === 'delivery' || picking.type === 'internal') {
+                // -qty at source
+                const srcQuant = await StockQuant.findOne({
+                    where: { productId: move.productId, locationId: picking.srcLocationId },
+                    transaction: t,
+                });
+
+                if (!srcQuant || srcQuant.quantity < qty) {
+                    await t.rollback();
+                    const product = await Product.findByPk(move.productId);
+                    return res.status(400).json({ error: `Insufficient stock for product: ${product?.name || move.productId}` });
+                }
+                await srcQuant.update({ quantity: srcQuant.quantity - qty }, { transaction: t });
+            }
 
             if (picking.type === 'receipt' || picking.type === 'internal') {
                 // +qty at destination
@@ -175,20 +195,6 @@ const validatePicking = async (req, res) => {
                     transaction: t,
                 });
                 await destQuant.update({ quantity: destQuant.quantity + qty }, { transaction: t });
-            }
-
-            if (picking.type === 'delivery' || picking.type === 'internal') {
-                // -qty at source
-                const srcQuant = await StockQuant.findOne({
-                    where: { productId: move.productId, locationId: picking.srcLocationId },
-                    transaction: t,
-                });
-                if (!srcQuant || srcQuant.quantity < qty) {
-                    await t.rollback();
-                    const product = await Product.findByPk(move.productId);
-                    return res.status(400).json({ error: `Insufficient stock for product: ${product?.name || move.productId}` });
-                }
-                await srcQuant.update({ quantity: srcQuant.quantity - qty }, { transaction: t });
             }
 
             await move.update({ status: 'done', doneQty: qty }, { transaction: t });

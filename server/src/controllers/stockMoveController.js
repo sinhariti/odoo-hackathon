@@ -29,7 +29,7 @@ const getStockMoves = async (req, res) => {
                     model: StockPicking,
                     as: 'picking',
                     where: Object.keys(pickingWhere).length ? pickingWhere : undefined,
-                    attributes: ['id', 'type', 'status', 'supplierName', 'customerName', 'doneDate'],
+                    attributes: ['id', 'type', 'status', 'reference', 'supplierName', 'customerName', 'scheduledDate', 'doneDate'],
                 },
                 { model: Product, as: 'product', attributes: ['id', 'name', 'sku', 'uom'] },
                 { model: Location, as: 'srcLocation', attributes: ['id', 'name'] },

@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import SearchButton from '../components/SearchButton';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import api from '../api/api';
 
-const Pill = ({ type, text }) => {
+const StatusPill = ({ status }) => {
   const styles = {
-    In: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-    Out: 'bg-green-500/10 text-green-400 border border-green-500/20',
-    Internal: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
     draft: 'bg-gray-500/10 text-gray-400 border border-gray-500/20',
     ready: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
     done: 'bg-green-500/10 text-green-400 border border-green-500/20',
@@ -17,8 +14,8 @@ const Pill = ({ type, text }) => {
   };
 
   return (
-    <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${styles[type] || 'bg-gray-800 text-gray-300'}`}>
-      {text}
+    <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${styles[status] || 'bg-gray-800 text-gray-300'}`}>
+      {status || '—'}
     </span>
   );
 };
@@ -50,41 +47,33 @@ const MoveHistory = () => {
     fetchMoves();
   }, [typeFilter]);
 
-  const getDirection = (type) => {
-    if (type === 'receipt') return 'In';
-    if (type === 'delivery') return 'Out';
-    return 'Internal';
-  };
-
-  const getParty = (picking) => {
+  const getContact = (picking) => {
     if (!picking) return '—';
     return picking.supplierName || picking.customerName || '—';
   };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // Apply client-side filters for status and search
+  // Client-side filters for status and search
   const filteredMoves = moves.filter((move) => {
     const status = move.picking?.status || '';
-    const party = getParty(move.picking);
-    const productName = move.product?.name || '';
+    const ref = move.picking?.reference || '';
+    const contact = getContact(move.picking);
     const matchesStatus = !statusFilter || status === statusFilter;
     const matchesSearch = !searchQuery ||
-      party.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (move.picking?.id?.toString() || '').includes(searchQuery);
+      ref.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
-  // Compute summary stats
-  const stats = {
-    total: filteredMoves.length,
-    in: filteredMoves.filter(m => m.picking?.type === 'receipt').length,
-    out: filteredMoves.filter(m => m.picking?.type === 'delivery').length,
-    pending: filteredMoves.filter(m => ['draft', 'waiting', 'ready'].includes(m.picking?.status)).length,
+  // Row text color: green for In (receipt), red for Out (delivery)
+  const getRowColor = (type) => {
+    if (type === 'receipt') return 'text-green-400';
+    if (type === 'delivery') return 'text-red-400';
+    return 'text-gray-300';
   };
 
   return (
@@ -92,10 +81,10 @@ const MoveHistory = () => {
       <Navbar />
 
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-        {/* Header & Controls Section */}
-        <div className="flex justify-between items-start mb-10">
+        {/* Header & Controls */}
+        <div className="flex justify-between items-start mb-8">
           <h2 className="text-3xl font-extrabold text-white tracking-tight mt-2">
-            Move history
+            Move History
           </h2>
 
           <div className="flex flex-col space-y-3 w-80">
@@ -147,39 +136,19 @@ const MoveHistory = () => {
           </div>
         )}
 
-        {/* Summary Stats Row */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div>
-            <p className="text-gray-400 text-sm font-medium">Total moves</p>
-            <p className="text-3xl font-semibold text-white mt-1">{stats.total}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm font-medium">In (receipts)</p>
-            <p className="text-3xl font-semibold text-blue-400 mt-1">{stats.in}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm font-medium">Out (deliveries)</p>
-            <p className="text-3xl font-semibold text-green-400 mt-1">{stats.out}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm font-medium">Pending action</p>
-            <p className="text-3xl font-semibold text-white mt-1">{stats.pending}</p>
-          </div>
-        </div>
-
         {/* Data Table */}
         <div className="bg-[#16171d] rounded-xl border border-[#2e303a] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead className="bg-[#1f2028] border-b border-[#2e303a]">
                 <tr>
-                  <th className="py-4 px-6 font-medium text-gray-400">ID</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Direction</th>
+                  <th className="py-4 px-6 font-medium text-gray-400">Reference</th>
+                  <th className="py-4 px-6 font-medium text-gray-400">Date</th>
+                  <th className="py-4 px-6 font-medium text-gray-400">Contact</th>
+                  <th className="py-4 px-6 font-medium text-gray-400">From</th>
+                  <th className="py-4 px-6 font-medium text-gray-400">To</th>
+                  <th className="py-4 px-6 font-medium text-gray-400 text-center">Quantity</th>
                   <th className="py-4 px-6 font-medium text-gray-400">Status</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Party</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">From &rarr; To</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Product</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Done on</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,22 +166,30 @@ const MoveHistory = () => {
                   </tr>
                 ) : (
                   filteredMoves.map((move, idx) => {
-                    const direction = getDirection(move.picking?.type);
+                    const rowColor = getRowColor(move.picking?.type);
                     return (
                       <tr key={move.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredMoves.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
-                        <td className="py-4 px-6 text-gray-400">#{move.picking?.id || move.id}</td>
-                        <td className="py-4 px-6">
-                          <Pill type={direction} text={direction} />
+                        <td className={`py-4 px-6 font-semibold ${rowColor}`}>
+                          {move.picking?.reference || `#${move.picking?.id || move.id}`}
+                        </td>
+                        <td className="py-4 px-6 text-gray-400">
+                          {formatDate(move.picking?.scheduledDate || move.createdAt)}
+                        </td>
+                        <td className="py-4 px-6 font-medium text-gray-200">
+                          {getContact(move.picking)}
+                        </td>
+                        <td className="py-4 px-6 text-gray-300">
+                          {move.srcLocation?.name || '—'}
+                        </td>
+                        <td className="py-4 px-6 text-gray-300">
+                          {move.destLocation?.name || '—'}
+                        </td>
+                        <td className="py-4 px-6 text-center text-gray-300 font-medium">
+                          {move.doneQty || move.demandQty || '—'}
                         </td>
                         <td className="py-4 px-6">
-                          <Pill type={move.picking?.status} text={move.picking?.status || '—'} />
+                          <StatusPill status={move.picking?.status} />
                         </td>
-                        <td className="py-4 px-6 font-medium text-gray-200">{getParty(move.picking)}</td>
-                        <td className="py-4 px-6 text-gray-300 font-medium flex items-center gap-2">
-                          {move.srcLocation?.name || '—'} <ArrowRight className="text-gray-500 w-4 h-4" /> {move.destLocation?.name || '—'}
-                        </td>
-                        <td className="py-4 px-6 text-gray-300">{move.product?.name || '—'}</td>
-                        <td className="py-4 px-6 text-gray-400">{formatDate(move.picking?.doneDate)}</td>
                       </tr>
                     );
                   })

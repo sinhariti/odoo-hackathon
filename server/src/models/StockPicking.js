@@ -7,6 +7,11 @@ const StockPicking = sequelize.define('StockPicking', {
         primaryKey: true,
         autoIncrement: true,
     },
+    reference: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+    },
     type: {
         type: DataTypes.ENUM('receipt', 'delivery', 'internal'),
         allowNull: false,
@@ -53,6 +58,32 @@ const StockPicking = sequelize.define('StockPicking', {
 }, {
     tableName: 'stock_pickings',
     timestamps: true,
+});
+
+// Auto-generate reference like WH/IN/0001 on creation
+const TYPE_CODE = { receipt: 'IN', delivery: 'OUT', internal: 'INT' };
+
+StockPicking.beforeCreate(async (picking) => {
+    const Location = require('./Location');
+    const Warehouse = require('./Warehouse');
+
+    // Try to resolve warehouse code from destination (or source) location
+    let whCode = 'WH';
+    const locId = picking.destLocationId || picking.srcLocationId;
+    if (locId) {
+        const loc = await Location.findByPk(locId, {
+            include: [{ model: Warehouse, as: 'warehouse', attributes: ['code', 'name'] }],
+        });
+        if (loc?.warehouse?.code) whCode = loc.warehouse.code;
+    }
+
+    const opCode = TYPE_CODE[picking.type] || 'INT';
+
+    // Count existing pickings of the same type to get the next sequence number
+    const count = await StockPicking.count({ where: { type: picking.type } });
+    const seq = String(count + 1).padStart(4, '0');
+
+    picking.reference = `${whCode}/${opCode}/${seq}`;
 });
 
 module.exports = StockPicking;

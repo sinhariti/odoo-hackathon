@@ -1,12 +1,29 @@
-import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const Navbar = ({ user = { loginId: 'admin' } }) => {
+const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { user, logout } = useAuth();
 
-  // Derive the first letter of the user's loginId for the avatar
-  const avatarLetter = (user?.loginId?.[0] || 'U').toUpperCase();
+  const avatarLetter = (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Dynamic page title based on current path
+  const getPageTitle = () => {
+    if (currentPath === '/dashboard') return 'Dashboard';
+    if (currentPath === '/stock') return 'Stock';
+    if (currentPath === '/history') return 'Move History';
+    if (currentPath === '/settings/warehouse') return 'Warehouse';
+    if (currentPath === '/settings/location') return 'Location';
+    return 'Dashboard';
+  };
 
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard' },
@@ -75,13 +92,22 @@ const Navbar = ({ user = { loginId: 'admin' } }) => {
         ))}
       </div>
 
-      {/* Right side: Page Title & Avatar */}
-      <div className="flex items-center space-x-6">
+      {/* Right side: Page Title, Avatar & Logout */}
+      <div className="flex items-center space-x-4">
         <h1 className="text-xl font-bold text-white tracking-wide">
-          Dashboard
+          {getPageTitle()}
         </h1>
-        <div className="h-10 w-10 rounded-lg bg-[#2e303a] border border-[#3e404a] flex items-center justify-center text-white font-bold shadow-[0_0_10px_rgba(168,85,247,0.2)]">
-          {avatarLetter}
+        <div className="flex items-center space-x-3">
+          <div className="h-10 w-10 rounded-lg bg-[#2e303a] border border-[#3e404a] flex items-center justify-center text-white font-bold shadow-[0_0_10px_rgba(168,85,247,0.2)]" title={user?.name || user?.email || ''}>
+            {avatarLetter}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-[#2e303a] transition-colors bg-transparent border-none cursor-pointer"
+            title="Logout"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </nav>
@@ -89,3 +115,4 @@ const Navbar = ({ user = { loginId: 'admin' } }) => {
 };
 
 export default Navbar;
+

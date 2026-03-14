@@ -1,34 +1,39 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
 import odooLogo from '../assets/odoo_logo.webp';
 
 const Login = () => {
-  const [formData, setFormData] = useState({ loginId: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(''); // Clear error on change
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic frontend validation for demonstration
-    // Since we don't have the backend connected here yet, we just simulate check
-    if (!formData.loginId || !formData.password) {
-      setError('Please enter both Login ID and Password');
+    if (!formData.email || !formData.password) {
+      setError('Please enter both Email and Password');
       return;
     }
 
-    // Mocking check creds (to be replaced with API call)
-    if (formData.loginId === 'testuser' && formData.password === 'Password123!') {
-      alert('Login successful');
-    } else {
-      setError('Invalid Login Id or Password');
+    setLoading(true);
+    try {
+      await login(formData.email, formData.password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,19 +63,19 @@ const Login = () => {
             )}
 
             <div>
-              <label htmlFor="loginId" className="block text-sm font-medium text-gray-300">
-                Login ID
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                Email
               </label>
               <div className="mt-1">
                 <input
-                  id="loginId"
-                  name="loginId"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
                   required
-                  value={formData.loginId}
+                  value={formData.email}
                   onChange={handleChange}
                   className="appearance-none block w-full px-4 py-3 border border-[#2e303a] rounded-lg bg-[#1f2028] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors sm:text-sm"
-                  placeholder="Enter your login ID"
+                  placeholder="Enter your email"
                 />
               </div>
             </div>
@@ -109,8 +114,8 @@ const Login = () => {
             </div>
 
             <div>
-              <Button type="submit">
-                Sign in
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Signing in...' : 'Sign in'}
               </Button>
             </div>
           </form>
@@ -140,3 +145,4 @@ const Login = () => {
 };
 
 export default Login;
+

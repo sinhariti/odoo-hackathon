@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Button from '../components/Button';
+import api from '../api/api';
 
 const WarehouseSettings = () => {
   const [formData, setFormData] = useState({
@@ -9,22 +10,30 @@ const WarehouseSettings = () => {
     address: ''
   });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setMessage('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.shortCode || !formData.address) {
       setMessage('All fields are required.');
       return;
     }
 
-    // Mock save
-    console.log("Saving warehouse", formData);
-    setMessage('Warehouse saved successfully!');
+    setLoading(true);
+    try {
+      await api.post('/warehouses', formData);
+      setMessage('Warehouse saved successfully!');
+      setFormData({ name: '', shortCode: '', address: '' });
+    } catch (err) {
+      setMessage(err.message || 'Failed to save warehouse.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,8 +115,8 @@ const WarehouseSettings = () => {
               </div>
 
               <div className="pt-4">
-                <Button type="submit">
-                  Save
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save'}
                 </Button>
               </div>
             </form>
@@ -119,3 +128,4 @@ const WarehouseSettings = () => {
 };
 
 export default WarehouseSettings;
+

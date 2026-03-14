@@ -1,36 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Button from '../components/Button';
+import api from '../api/api';
 
 const LocationSettings = () => {
   const [formData, setFormData] = useState({
     name: '',
     shortCode: '',
-    warehouse: ''
+    warehouseId: ''
   });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [warehouses, setWarehouses] = useState([]);
+  const [warehousesLoading, setWarehousesLoading] = useState(true);
 
-  // In reality, this would be fetched from the backend API
-  const mockWarehouses = [
-    { id: '1', name: 'Main Distribution Center (WH-MAIN)' },
-    { id: '2', name: 'West Coast Hub (WH-WEST)' },
-  ];
+  useEffect(() => {
+    const fetchWarehouses = async () => {
+      try {
+        const data = await api.get('/warehouses');
+        setWarehouses(data.warehouses || []);
+      } catch (err) {
+        console.error('Failed to fetch warehouses:', err);
+      } finally {
+        setWarehousesLoading(false);
+      }
+    };
+    fetchWarehouses();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setMessage('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.shortCode || !formData.warehouse) {
+    if (!formData.name || !formData.shortCode || !formData.warehouseId) {
       setMessage('All fields are required.');
       return;
     }
 
-    // Mock save
-    console.log("Saving location", formData);
-    setMessage('Location saved successfully!');
+    setLoading(true);
+    try {
+      await api.post('/locations', formData);
+      setMessage('Location saved successfully!');
+      setFormData({ name: '', shortCode: '', warehouseId: '' });
+    } catch (err) {
+      setMessage(err.message || 'Failed to save location.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,24 +113,25 @@ const LocationSettings = () => {
               </div>
 
               <div>
-                <label htmlFor="warehouse" className="block text-sm font-medium text-gray-300">
+                <label htmlFor="warehouseId" className="block text-sm font-medium text-gray-300">
                   Warehouse
                 </label>
                 <div className="mt-1 relative">
                   <select
-                    id="warehouse"
-                    name="warehouse"
+                    id="warehouseId"
+                    name="warehouseId"
                     required
-                    value={formData.warehouse}
+                    value={formData.warehouseId}
                     onChange={handleChange}
                     className="appearance-none block w-full px-4 py-3 border border-[#2e303a] rounded-lg bg-[#1f2028] text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors sm:text-sm pr-10"
                   >
-                    <option value="" disabled className="text-gray-500">Select parent warehouse</option>
-                    {mockWarehouses.map((wh) => (
-                      <option key={wh.id} value={wh.id}>{wh.name}</option>
+                    <option value="" disabled className="text-gray-500">
+                      {warehousesLoading ? 'Loading warehouses...' : 'Select parent warehouse'}
+                    </option>
+                    {warehouses.map((wh) => (
+                      <option key={wh.id} value={wh.id}>{wh.name} ({wh.shortCode})</option>
                     ))}
                   </select>
-                  {/* Custom select arrow for dark mode */}
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
                     <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                       <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
@@ -121,8 +141,8 @@ const LocationSettings = () => {
               </div>
 
               <div className="pt-4">
-                <Button type="submit">
-                  Save
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save'}
                 </Button>
               </div>
             </form>
@@ -134,3 +154,4 @@ const LocationSettings = () => {
 };
 
 export default LocationSettings;
+

@@ -1,52 +1,52 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
 import odooLogo from '../assets/odoo_logo.webp';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    loginId: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { signup } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(''); // Clear error on change
+    setError('');
   };
 
   const validateInput = () => {
-    // 1. Login ID length 6-12 chars
-    if (formData.loginId.length < 6 || formData.loginId.length > 12) {
-      return "Login ID must be between 6 and 12 characters.";
+    if (formData.name.length < 2) {
+      return "Name must be at least 2 characters.";
     }
 
-    // 2. Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       return "Please enter a valid Email ID.";
     }
 
-    // 3. Password min 8 chars, 1 small, 1 large, 1 special
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
       return "Password must be >8 characters, with at least 1 uppercase, 1 lowercase, and 1 special character.";
     }
 
-    // 4. Password Match
     if (formData.password !== formData.confirmPassword) {
       return "Passwords do not match.";
     }
 
-    return null; // Valid
+    return null;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationError = validateInput();
@@ -55,7 +55,15 @@ const Signup = () => {
       return;
     }
 
-    alert('Frontend Validation Passed! Ready for API call.');
+    setLoading(true);
+    try {
+      await signup(formData.name, formData.email, formData.password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,19 +92,19 @@ const Signup = () => {
             )}
 
             <div>
-              <label htmlFor="loginId" className="block text-sm font-medium text-gray-300">
-                Login ID
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+                Name
               </label>
               <div className="mt-1">
                 <input
-                  id="loginId"
-                  name="loginId"
+                  id="name"
+                  name="name"
                   type="text"
                   required
-                  value={formData.loginId}
+                  value={formData.name}
                   onChange={handleChange}
                   className="appearance-none block w-full px-4 py-3 border border-[#2e303a] rounded-lg bg-[#1f2028] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors sm:text-sm"
-                  placeholder="Must be 6-12 characters"
+                  placeholder="Your full name"
                 />
               </div>
             </div>
@@ -170,8 +178,8 @@ const Signup = () => {
             </div>
 
             <div className="pt-2">
-              <Button type="submit">
-                Sign up
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Creating account...' : 'Sign up'}
               </Button>
             </div>
           </form>
@@ -201,3 +209,4 @@ const Signup = () => {
 };
 
 export default Signup;
+

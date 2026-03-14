@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
+import api from '../api/api';
 import odooLogo from '../assets/odoo_logo.webp';
 
 const ForgotPassword = () => {
@@ -9,23 +10,31 @@ const ForgotPassword = () => {
   const [step, setStep] = useState(1); // 1 = Enter Email, 2 = Enter OTP
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [resetToken, setResetToken] = useState('');
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address');
       return;
     }
 
-    // Mock API call to send OTP
-    setError('');
-    setStep(2);
+    setLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email });
+      setError('');
+      setStep(2);
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
 
     if (!otp) {
@@ -33,9 +42,17 @@ const ForgotPassword = () => {
       return;
     }
 
-    // Mock API call to verify OTP
-    setSuccess(true);
-    setError('');
+    setLoading(true);
+    try {
+      const data = await api.post('/auth/verify-otp', { email, otp });
+      setResetToken(data.resetToken);
+      setSuccess(true);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Invalid OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -87,8 +104,8 @@ const ForgotPassword = () => {
               </div>
 
               <div>
-                <Button type="submit">
-                  Send OTP
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send OTP'}
                 </Button>
               </div>
             </form>
@@ -128,8 +145,8 @@ const ForgotPassword = () => {
 
               {!success && (
                 <div>
-                  <Button type="submit">
-                    Confirm
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Verifying...' : 'Confirm'}
                   </Button>
                 </div>
               )}
@@ -173,3 +190,4 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+

@@ -3,6 +3,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const { sequelize } = require('./models');
+const authRoutes = require('./routes/auth');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -12,6 +14,12 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Global error handler
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

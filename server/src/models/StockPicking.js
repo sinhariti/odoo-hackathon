@@ -71,10 +71,17 @@ StockPicking.beforeCreate(async (picking) => {
     let whCode = 'WH';
     const locId = picking.destLocationId || picking.srcLocationId;
     if (locId) {
-        const loc = await Location.findByPk(locId, {
-            include: [{ model: Warehouse, as: 'warehouse', attributes: ['code', 'name'] }],
-        });
-        if (loc?.warehouse?.code) whCode = loc.warehouse.code;
+        try {
+            const loc = await Location.findByPk(locId);
+            if (loc && loc.warehouseId) {
+                const wh = await Warehouse.findByPk(loc.warehouseId);
+                if (wh && wh.code) {
+                    whCode = wh.code;
+                }
+            }
+        } catch (err) {
+            console.error('Error resolving warehouse code for reference:', err);
+        }
     }
 
     const opCode = TYPE_CODE[picking.type] || 'INT';

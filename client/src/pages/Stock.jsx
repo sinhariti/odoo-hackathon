@@ -43,7 +43,7 @@ const Stock = () => {
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         {/* Header Section */}
         <div className="flex justify-between items-end mb-6 pb-4 border-b border-[#2e303a]">
-          <h2 className="text-3xl font-extrabold text-purple-400 tracking-tight">
+          <h2 className="text-3xl font-extrabold tracking-tight">
             Stock
           </h2>
           <div>

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Button from '../components/Button';
+import SearchButton from '../components/SearchButton';
 import api from '../api/api';
 
 const WarehouseSettings = () => {
@@ -11,6 +12,30 @@ const WarehouseSettings = () => {
   });
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [warehouses, setWarehouses] = useState([]);
+  const [fetching, setFetching] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchWarehouses = async () => {
+    try {
+      setFetching(true);
+      const data = await api.get('/warehouses');
+      setWarehouses(data.warehouses || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWarehouses();
+  }, []);
+
+  const filteredWarehouses = warehouses.filter(w =>
+    w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (w.shortCode && w.shortCode.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,6 +54,7 @@ const WarehouseSettings = () => {
       await api.post('/warehouses', formData);
       setMessage('Warehouse saved successfully!');
       setFormData({ name: '', shortCode: '', address: '' });
+      fetchWarehouses();
     } catch (err) {
       setMessage(err.message || 'Failed to save warehouse.');
     } finally {
@@ -40,8 +66,9 @@ const WarehouseSettings = () => {
     <div className="min-h-screen bg-[#08060d] text-gray-300 font-sans flex flex-col">
       <Navbar />
 
-      <main className="flex-1 p-8 flex justify-center items-start pt-16">
-        <div className="w-full max-w-xl">
+      <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-12 pb-24 pt-8">
+        {/* Form Section */}
+        <div className="w-full max-w-2xl mx-auto">
           <div className="mb-8 text-center">
             <h2 className="text-3xl font-extrabold text-white tracking-tight">
               Warehouse
@@ -120,6 +147,61 @@ const WarehouseSettings = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+
+        {/* Table Section */}
+        <div className="w-full">
+          <div className="flex justify-between items-end mb-6 pb-4 border-b border-[#2e303a]">
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Existing Warehouses
+            </h2>
+            <div>
+              <SearchButton onSearch={setSearchQuery} />
+            </div>
+          </div>
+
+          <div className="bg-[#16171d] rounded-xl border border-[#2e303a] overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead className="bg-[#1f2028] border-b border-[#2e303a]">
+                  <tr>
+                    <th className="py-4 px-6 font-medium text-gray-400">Name</th>
+                    <th className="py-4 px-6 font-medium text-gray-400">Short Code</th>
+                    <th className="py-4 px-6 font-medium text-gray-400">Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fetching ? (
+                    <tr>
+                      <td colSpan={3} className="py-8 px-6 text-center text-gray-500 animate-pulse">
+                        Loading warehouses...
+                      </td>
+                    </tr>
+                  ) : filteredWarehouses.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="py-8 px-6 text-center text-gray-500">
+                        {searchQuery ? 'No warehouses match your search.' : 'No warehouses found.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredWarehouses.map((wh, idx) => (
+                      <tr key={wh.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredWarehouses.length - 1 ? 'border-b border-dashed border-[#2e303a]' : ''}`}>
+                        <td className="py-4 px-6 font-bold text-gray-200">{wh.name}</td>
+                        <td className="py-4 px-6 font-medium text-purple-400">{wh.shortCode}</td>
+                        <td className="py-4 px-6 text-gray-400 truncate max-w-xs">{wh.address || '—'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between px-6 py-4 border-t border-[#2e303a] bg-[#1a1b22]">
+              <p className="text-sm text-gray-400">
+                Showing <span className="text-white">1–{filteredWarehouses.length}</span> of {warehouses.length}
+              </p>
+            </div>
           </div>
         </div>
       </main>

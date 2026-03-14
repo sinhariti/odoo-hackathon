@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Button from '../components/Button';
 import PrintPageButton from '../components/PrintPageButton';
@@ -10,6 +10,7 @@ import api from '../api/api';
 const AddReceipt = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams();
 
   // Pickings state
   const [pickingId, setPickingId] = useState(null);
@@ -35,7 +36,7 @@ const AddReceipt = () => {
   const [addingProduct, setAddingProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ productId: '', quantity: 1 });
 
-  // Fetch reference data eagerly
+  // Fetch reference data eagerly, and picking data if editing
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -45,6 +46,26 @@ const AddReceipt = () => {
         ]);
         setAvailableProducts(prodRes.products || []);
         setAvailableLocations(locRes.locations || []);
+
+        if (id) {
+          const paramsId = parseInt(id);
+          const { picking } = await api.get(`/receipts/${paramsId}`);
+          setPickingId(picking.id);
+          setReference(picking.reference || `#${picking.id}`);
+          setStatus(picking.status.charAt(0).toUpperCase() + picking.status.slice(1));
+          setFormData({
+            receiveFrom: picking.supplierName || '',
+            scheduleDate: picking.scheduledDate ? picking.scheduledDate.split('T')[0] : '',
+            responsible: picking.createdBy?.name || user?.name || user?.email || 'admin',
+          });
+          const mappedProducts = (picking.moves || []).map(m => ({
+            id: m.id,
+            productId: m.productId,
+            product: m.product ? `[${m.product.sku || ''}] ${m.product.name}` : 'Unknown',
+            quantity: m.demandQty
+          }));
+          setProducts(mappedProducts);
+        }
       } catch (err) {
         setError('Failed to load initial data');
       } finally {
@@ -52,32 +73,75 @@ const AddReceipt = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [id, user?.name, user?.email]);
 
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProduct.productId) return;
     const prodDef = availableProducts.find(p => p.id === parseInt(newProduct.productId));
     const prodName = prodDef ? `[${prodDef.sku || ''}] ${prodDef.name}` : 'Unknown';
 
-    setProducts([...products, {
-      id: Date.now(), // temp id
-      productId: parseInt(newProduct.productId),
-      product: prodName,
-      quantity: newProduct.quantity || 1
-    }]);
+    if (pickingId) {
+      try {
+        setSaving(true);
+        const { move } = await api.post(`/receipts/${pickingId}/lines`, {
+          productId: parseInt(newProduct.productId),
+          demandQty: newProduct.quantity || 1
+        });
+        setProducts([...products, {
+          id: move.id, // real backend id
+          productId: move.productId,
+          product: prodName,
+          quantity: move.demandQty
+        }]);
+      } catch (err) {
+        setError(err.message || 'Failed to add product to receipt');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setProducts([...products, {
+        id: Date.now(), // temp id
+        productId: parseInt(newProduct.productId),
+        product: prodName,
+        quantity: newProduct.quantity || 1
+      }]);
+    }
 
     setNewProduct({ productId: '', quantity: 1 });
     setAddingProduct(false);
   };
 
-  const handleDeleteProduct = (id) => {
-    setProducts(products.filter(p => p.id !== id));
+  const handleDeleteProduct = async (id) => {
+    if (pickingId) {
+      try {
+        setSaving(true);
+        await api.delete(`/receipts/${pickingId}/lines/${id}`);
+        setProducts(products.filter(p => p.id !== id));
+      } catch (err) {
+        setError(err.message || 'Failed to remove product from receipt');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setProducts(products.filter(p => p.id !== id));
+    }
   };
 
   const createAndReady = async () => {
     setSaving(true);
     setError('');
     try {
+      if (pickingId) {
+        await api.put(`/receipts/${pickingId}`, {
+          status: 'ready',
+          supplierName: formData.receiveFrom,
+          scheduledDate: formData.scheduleDate || null
+        });
+        setStatus('Ready');
+        setSaving(false);
+        return;
+      }
+
       // 1. Create Picking
       const supplierLoc = availableLocations.find(l => l.type === 'supplier');
       const internalLoc = availableLocations.find(l => l.type === 'internal');
@@ -171,7 +235,7 @@ const AddReceipt = () => {
         <div className="flex items-center gap-4 mb-8">
           <div className="w-24">
             <Button className="py-2! cursor-default">
-              New
+              {id ? 'Edit' : 'New'}
             </Button>
           </div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight">
@@ -298,7 +362,7 @@ const AddReceipt = () => {
                         <td className="py-4 px-2 font-medium text-gray-200">{p.product}</td>
                         <td className="py-4 px-2 text-right text-gray-300 font-medium">{p.quantity}</td>
                         <td className="py-4 px-2 text-right">
-                          {status === 'Draft' && (
+                          {(status === 'Draft' || status === 'Ready') && (
                             <button
                               onClick={() => handleDeleteProduct(p.id)}
                               className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1 outline-none focus:outline-none"
@@ -311,7 +375,7 @@ const AddReceipt = () => {
                       </tr>
                     ))}
 
-                    {status === 'Draft' && (
+                    {(status === 'Draft' || status === 'Ready') && (
                       addingProduct ? (
                         <tr className="border-b border-[#2e303a] bg-[#1a1b22]">
                           <td className="py-2 px-2">

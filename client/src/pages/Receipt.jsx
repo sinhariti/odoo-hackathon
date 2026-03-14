@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import Button from '../components/Button';
 import SearchButton from '../components/SearchButton';
 import { LayoutList, LayoutGrid } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 
 const StatusPill = ({ status }) => {
@@ -25,7 +25,7 @@ const StatusPill = ({ status }) => {
 };
 
 // Kanban Column Component
-const KanbanColumn = ({ title, items }) => {
+const KanbanColumn = ({ title, items, navigate }) => {
   return (
     <div className="flex-1 bg-[#16171d] rounded-xl border border-[#2e303a] p-4 min-w-[300px] flex flex-col h-full">
       <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#2e303a]">
@@ -37,7 +37,7 @@ const KanbanColumn = ({ title, items }) => {
 
       <div className="flex-1 overflow-y-auto space-y-3">
         {items.map(item => (
-          <div key={item.id} className="bg-[#1f2028] p-4 rounded-lg border border-[#3e404a] hover:border-purple-500/50 transition-colors shadow-sm cursor-pointer group">
+          <div key={item.id} onClick={() => navigate(`/operations/receipt/${item.id}`)} className="bg-[#1f2028] p-4 rounded-lg border border-[#3e404a] hover:border-purple-500/50 transition-colors shadow-sm cursor-pointer group">
             <div className="flex justify-between items-start mb-2">
               <span className="font-bold text-gray-200 text-sm group-hover:text-purple-400 transition-colors">{item.reference || `#${item.id}`}</span>
               <StatusPill status={item.status} />
@@ -67,6 +67,7 @@ const KanbanColumn = ({ title, items }) => {
 };
 
 const Receipt = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
   const [searchQuery, setSearchQuery] = useState('');
   const [receipts, setReceipts] = useState([]);
@@ -175,7 +176,7 @@ const Receipt = () => {
                       </tr>
                     ) : (
                       filteredReceipts.map((item, idx) => (
-                        <tr key={item.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredReceipts.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
+                        <tr key={item.id} onClick={() => navigate(`/operations/receipt/${item.id}`)} className={`cursor-pointer hover:bg-[#1f2028] transition-colors ${idx !== filteredReceipts.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
                           <td className="py-4 px-6 font-bold text-gray-200">{item.reference || `#${item.id}`}</td>
                           <td className="py-4 px-6 text-gray-400">{item.srcLocation?.name || '—'}</td>
                           <td className="py-4 px-6 text-gray-300 font-medium">{item.destLocation?.name || '—'}</td>
@@ -197,18 +198,22 @@ const Receipt = () => {
               <KanbanColumn
                 title="Draft"
                 items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'draft')}
+                navigate={navigate}
               />
               <KanbanColumn
                 title="Waiting"
                 items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'waiting')}
+                navigate={navigate}
               />
               <KanbanColumn
                 title="Ready"
                 items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'ready')}
+                navigate={navigate}
               />
               <KanbanColumn
                 title="Done"
                 items={filteredReceipts.filter(r => (r.status || '').toLowerCase() === 'done')}
+                navigate={navigate}
               />
             </div>
           )}

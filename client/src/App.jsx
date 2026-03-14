@@ -32,8 +32,10 @@ function App() {
           <Route path="/history" element={<ProtectedRoute><MoveHistory /></ProtectedRoute>} />
           <Route path="/operations/receipt" element={<ProtectedRoute><Receipt /></ProtectedRoute>} />
           <Route path="/operations/receipt/new" element={<ProtectedRoute><AddReceipt /></ProtectedRoute>} />
+          <Route path="/operations/receipt/:id" element={<ProtectedRoute><AddReceipt /></ProtectedRoute>} />
           <Route path="/operations/delivery" element={<ProtectedRoute><Delivery /></ProtectedRoute>} />
           <Route path="/operations/delivery/new" element={<ProtectedRoute><AddDelivery /></ProtectedRoute>} />
+          <Route path="/operations/delivery/:id" element={<ProtectedRoute><AddDelivery /></ProtectedRoute>} />
           <Route path="/operations/adjustment" element={<ProtectedRoute><Adjustment /></ProtectedRoute>} />
           <Route path="/settings/warehouse" element={<ProtectedRoute><WarehouseSettings /></ProtectedRoute>} />
           <Route path="/settings/location" element={<ProtectedRoute><LocationSettings /></ProtectedRoute>} />

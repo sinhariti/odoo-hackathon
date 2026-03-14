@@ -202,9 +202,6 @@ const AddReceipt = () => {
               </div>
               <div className="w-24">
                 <PrintPageButton />
-                <Button className="py-2! text-sm! bg-[#1f2028]! rounded-lg border border-[#3e404a] text-gray-300 hover:text-white! hover:border-purple-500/50" disabled={status !== 'Done'}>
-                  Print
-                </Button>
               </div>
               <div className="w-24">
                 <Button

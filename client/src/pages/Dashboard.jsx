@@ -91,7 +91,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-end flex-1">
               <div className="w-48">
                 <Button onClick={() => console.log("Receipts clicked")}>
-                  {loading ? '...' : `${receiptStats.total} total`}
+                  {loading ? '...' : `${receiptStats.total} to Receive`}
                 </Button>
               </div>
               <div className="flex flex-col space-y-2 text-right">
@@ -113,7 +113,7 @@ const Dashboard = () => {
                     )}
                     <div className="flex items-center justify-end space-x-2">
                       <span className="text-blue-400 font-bold text-lg">{receiptStats.total}</span>
-                      <span className="text-gray-400 text-sm">operations</span>
+                      <span className="text-gray-400 text-sm">Operations</span>
                     </div>
                   </>
                 )}
@@ -129,7 +129,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-end flex-1">
               <div className="w-48">
                 <Button onClick={() => console.log("Deliveries clicked")}>
-                  {loading ? '...' : `${deliveryStats.total} total`}
+                  {loading ? '...' : `${deliveryStats.total} to Deliver`}
                 </Button>
               </div>
               <div className="flex flex-col space-y-2 text-right">
@@ -151,7 +151,7 @@ const Dashboard = () => {
                     )}
                     <div className="flex items-center justify-end space-x-2">
                       <span className="text-purple-400 font-bold text-lg">{deliveryStats.total}</span>
-                      <span className="text-gray-400 text-sm">operations</span>
+                      <span className="text-gray-400 text-sm">Operations</span>
                     </div>
                   </>
                 )}

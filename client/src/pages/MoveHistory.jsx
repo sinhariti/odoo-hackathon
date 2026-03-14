@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import SearchButton from '../components/SearchButton';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LayoutList, LayoutGrid } from 'lucide-react';
 import api from '../api/api';
 
 const StatusPill = ({ status }) => {
@@ -20,7 +20,56 @@ const StatusPill = ({ status }) => {
   );
 };
 
+// Kanban Column Component
+const KanbanColumn = ({ title, items, getContact, formatDate, getRowColor }) => {
+  return (
+    <div className="flex-1 bg-[#16171d] rounded-xl border border-[#2e303a] p-4 min-w-[300px] flex flex-col h-full">
+      <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#2e303a]">
+        <h3 className="font-bold text-gray-300 tracking-wide">{title}</h3>
+        <span className="bg-[#1f2028] text-gray-400 text-xs font-bold px-2 py-1 rounded-full border border-[#3e404a]">
+          {items.length}
+        </span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-3">
+        {items.map(move => {
+          const rowColor = getRowColor(move.picking?.type);
+          return (
+            <div key={move.id} className="bg-[#1f2028] p-4 rounded-lg border border-[#3e404a] hover:border-purple-500/50 transition-colors shadow-sm cursor-pointer group">
+              <div className="flex justify-between items-start mb-2">
+                <span className={`font-bold text-sm transition-colors ${rowColor}`}>
+                  {move.picking?.reference || `#${move.picking?.id || move.id}`}
+                </span>
+                <StatusPill status={move.picking?.status} />
+              </div>
+
+              <p className="text-gray-300 text-sm font-medium mb-3 truncate">{getContact(move.picking)}</p>
+
+              <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex flex-col space-y-1">
+                  <span>From: <span className="text-gray-400 font-medium">{move.srcLocation?.name || '—'}</span></span>
+                  <span>To: <span className="text-gray-400 font-medium">{move.destLocation?.name || '—'}</span></span>
+                </div>
+                <div className="text-right flex flex-col justify-end space-y-1">
+                  <span className="font-medium text-gray-300">Qty: {move.doneQty || move.demandQty || '—'}</span>
+                  <span>{formatDate(move.picking?.scheduledDate || move.createdAt)}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {items.length === 0 && (
+          <div className="text-center py-8 text-gray-500 text-sm">
+            No moves here
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const MoveHistory = () => {
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
   const [moves, setMoves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -88,8 +137,32 @@ const MoveHistory = () => {
           </h2>
 
           <div className="flex flex-col space-y-3 w-80">
-            <div className="flex justify-end w-full">
+            <div className="flex justify-end w-full items-center gap-3">
               <SearchButton onSearch={setSearchQuery} />
+
+              {/* View Toggles Container */}
+              <div className="flex items-center bg-[#1f2028] border border-[#2e303a] rounded-lg p-1 shadow-sm shrink-0">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-md transition-all ${viewMode === 'list'
+                    ? 'bg-[#2e303a] text-purple-400 shadow-sm border border-[#3e404a]'
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#2e303a]/50'
+                    }`}
+                  title="List View"
+                >
+                  <LayoutList size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`p-2 rounded-md transition-all ${viewMode === 'kanban'
+                    ? 'bg-[#2e303a] text-purple-400 shadow-sm border border-[#3e404a]'
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#2e303a]/50'
+                    }`}
+                  title="Kanban View"
+                >
+                  <LayoutGrid size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Type Filter */}
@@ -136,82 +209,103 @@ const MoveHistory = () => {
           </div>
         )}
 
-        {/* Data Table */}
-        <div className="bg-[#16171d] rounded-xl border border-[#2e303a] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead className="bg-[#1f2028] border-b border-[#2e303a]">
-                <tr>
-                  <th className="py-4 px-6 font-medium text-gray-400">Reference</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Date</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Contact</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">From</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">To</th>
-                  <th className="py-4 px-6 font-medium text-gray-400 text-center">Quantity</th>
-                  <th className="py-4 px-6 font-medium text-gray-400">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 px-6 text-center text-gray-500 animate-pulse">
-                      Loading move history...
-                    </td>
-                  </tr>
-                ) : filteredMoves.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 px-6 text-center text-gray-500">
-                      No moves found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredMoves.map((move, idx) => {
-                    const rowColor = getRowColor(move.picking?.type);
-                    return (
-                      <tr key={move.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredMoves.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
-                        <td className={`py-4 px-6 font-semibold ${rowColor}`}>
-                          {move.picking?.reference || `#${move.picking?.id || move.id}`}
-                        </td>
-                        <td className="py-4 px-6 text-gray-400">
-                          {formatDate(move.picking?.scheduledDate || move.createdAt)}
-                        </td>
-                        <td className="py-4 px-6 font-medium text-gray-200">
-                          {getContact(move.picking)}
-                        </td>
-                        <td className="py-4 px-6 text-gray-300">
-                          {move.srcLocation?.name || '—'}
-                        </td>
-                        <td className="py-4 px-6 text-gray-300">
-                          {move.destLocation?.name || '—'}
-                        </td>
-                        <td className="py-4 px-6 text-center text-gray-300 font-medium">
-                          {move.doneQty || move.demandQty || '—'}
-                        </td>
-                        <td className="py-4 px-6">
-                          <StatusPill status={move.picking?.status} />
+        {/* Data Container */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {viewMode === 'list' && (
+            <div className="bg-[#16171d] rounded-xl border border-[#2e303a] overflow-hidden flex-shrink-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead className="bg-[#1f2028] border-b border-[#2e303a]">
+                    <tr>
+                      <th className="py-4 px-6 font-medium text-gray-400">Reference</th>
+                      <th className="py-4 px-6 font-medium text-gray-400">Date</th>
+                      <th className="py-4 px-6 font-medium text-gray-400">Contact</th>
+                      <th className="py-4 px-6 font-medium text-gray-400">From</th>
+                      <th className="py-4 px-6 font-medium text-gray-400">To</th>
+                      <th className="py-4 px-6 font-medium text-gray-400 text-center">Quantity</th>
+                      <th className="py-4 px-6 font-medium text-gray-400">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 px-6 text-center text-gray-500 animate-pulse">
+                          Loading move history...
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ) : filteredMoves.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 px-6 text-center text-gray-500">
+                          No moves found.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredMoves.map((move, idx) => {
+                        const rowColor = getRowColor(move.picking?.type);
+                        return (
+                          <tr key={move.id} className={`hover:bg-[#1f2028] transition-colors ${idx !== filteredMoves.length - 1 ? 'border-b border-[#2e303a]' : ''}`}>
+                            <td className={`py-4 px-6 font-semibold ${rowColor}`}>
+                              {move.picking?.reference || `#${move.picking?.id || move.id}`}
+                            </td>
+                            <td className="py-4 px-6 text-gray-400">
+                              {formatDate(move.picking?.scheduledDate || move.createdAt)}
+                            </td>
+                            <td className="py-4 px-6 font-medium text-gray-200">
+                              {getContact(move.picking)}
+                            </td>
+                            <td className="py-4 px-6 text-gray-300">
+                              {move.srcLocation?.name || '—'}
+                            </td>
+                            <td className="py-4 px-6 text-gray-300">
+                              {move.destLocation?.name || '—'}
+                            </td>
+                            <td className="py-4 px-6 text-center text-gray-300 font-medium">
+                              {move.doneQty || move.demandQty || '—'}
+                            </td>
+                            <td className="py-4 px-6">
+                              <StatusPill status={move.picking?.status} />
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-          {/* Pagination Footer */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-[#2e303a] bg-[#1a1b22]">
-            <p className="text-sm text-gray-400">
-              Showing <span className="text-white">1–{filteredMoves.length}</span> of {moves.length}
-            </p>
-            <div className="flex space-x-2">
-              <button disabled className="px-4 py-2 border border-[#2e303a] rounded-lg text-sm font-medium text-gray-500 cursor-not-allowed flex items-center gap-1">
-                &larr; Prev
-              </button>
-              <button className="px-4 py-2 border border-[#3e404a] bg-[#2e303a] rounded-lg text-sm font-medium text-white hover:bg-[#3e404a] transition-colors flex items-center gap-1">
-                Next &rarr;
-              </button>
+              {/* Pagination Footer */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-[#2e303a] bg-[#1a1b22]">
+                <p className="text-sm text-gray-400">
+                  Showing <span className="text-white">1–{filteredMoves.length}</span> of {moves.length}
+                </p>
+                <div className="flex space-x-2">
+                  <button disabled className="px-4 py-2 border border-[#2e303a] rounded-lg text-sm font-medium text-gray-500 cursor-not-allowed flex items-center gap-1">
+                    &larr; Prev
+                  </button>
+                  <button className="px-4 py-2 border border-[#3e404a] bg-[#2e303a] rounded-lg text-sm font-medium text-white hover:bg-[#3e404a] transition-colors flex items-center gap-1">
+                    Next &rarr;
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Kanban View */}
+          {viewMode === 'kanban' && (
+            <div className="flex-1 flex gap-6 overflow-x-auto items-start">
+              {['draft', 'waiting', 'ready', 'done', 'cancelled'].map(status => (
+                <KanbanColumn
+                  key={status}
+                  title={status.charAt(0).toUpperCase() + status.slice(1)}
+                  status={status}
+                  items={filteredMoves.filter(m => (m.picking?.status || 'draft') === status)}
+                  getContact={getContact}
+                  formatDate={formatDate}
+                  getRowColor={getRowColor}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

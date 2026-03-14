@@ -1,0 +1,4 @@
+name,email,passwordHash,otp,otpExpiry,role
+admin1,admin1@gmail.com,$2b$10$hash1,NULL,NULL,inventory_manager
+staff1,staff1@gmail.com,$2b$10$hash2,NULL,NULL,warehouse_staff
+staff2,staff2@gmail.com,$2b$10$hash3,NULL,NULL,warehouse_staff

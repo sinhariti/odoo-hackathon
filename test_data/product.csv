@@ -1,0 +1,14 @@
+id,name,sku,categoryId,uom,description
+1,Wireless Mouse,ELC1001,1,pcs,2.4GHz wireless optical mouse
+2,USB Keyboard,ELC1002,1,pcs,Standard USB wired keyboard
+3,HDMI Cable 2m,ELC1003,1,pcs,High speed HDMI cable 2 meters
+4,A4 Paper Pack,OFF2001,2,pack,500 sheets A4 size printing paper
+5,Ballpoint Pen Blue,OFF2002,2,box,Box of 50 blue ballpoint pens
+6,Sticky Notes 3x3,OFF2003,2,pack,Pack of colorful sticky notes
+7,Corrugated Box Small,PKG3001,3,pcs,Small size corrugated shipping box
+8,Bubble Wrap Roll,PKG3002,3,roll,Protective bubble wrap roll
+9,Packing Tape Clear,PKG3003,3,roll,Clear adhesive packing tape
+10,Adjustable Wrench,TLH4001,4,pcs,Steel adjustable wrench tool
+11,Phillips Screwdriver,TLH4002,4,pcs,Medium size Phillips screwdriver
+12,Microfiber Cloth,CNS5001,5,pack,Pack of 5 microfiber cleaning cloths
+13,All Purpose Cleaner,CNS5002,5,bottle,Multipurpose liquid cleaning solution

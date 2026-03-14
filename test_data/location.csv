@@ -1,0 +1,16 @@
+id,warehouseId,name,type
+1,1,A-Zone,internal
+2,1,B-Zone,internal
+3,1,A1-Rack,supplier
+4,1,A2-Rack,supplier
+5,1,B1-Rack,supplier
+6,2,Receiving-Area,customer
+7,2,Dispatch-Area,customer
+8,2,R1-Shelf,customer
+9,3,Zone-C,internal
+10,3,C1-Rack,supplier
+11,3,C2-Rack,supplier
+12,4,Cold-Storage-A,supplier
+13,4,Cold-Storage-B,supplier
+14,5,Overflow-Zone,production
+15,5,Packaging-Area,production
